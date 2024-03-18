@@ -1,0 +1,43 @@
+周报：
+
+本周熟悉iOS代码：
+1. BDJSTouchEventView: JS监听点击网页上的视图
+  2. BDClassDescription: 类的描述信息
+  3. BDEnumDescription： 枚举的描述问题
+  4. BDReadWriteLock: 读写锁的类
+  5. BDObjectIdentityProvider：对象唯一标识提供类
+  6. BDPropertyDescription： 属性的描述类
+  7. BDTypeDescription： 类型描述类
+  8. BDValueTransformers： 值的转换类
+本周学习安卓内容为：
+1. Button的$AppClick事件
+    1. 自定义MyApplication继承自Application
+    2. 使用Application注册Application.ActivityLifecycleCallbacks
+    3. 在onActivityResumed获取当前activity，并对activity下所有添加了事件的view添加自定义事件
+    4. 在自定义事件中先执行系统事件，再进行埋点事件
+2. 使用循环视图动态更新视图布局
+    1. notifyItemInsert：通知适配器在指定位置新增一条列表项
+    2. notifyItemRemove：通知适配器在指定位置删除一条列表项
+    3. notifyItemChanged: 通知适配器指定位置发生了改变，刷新指定位置的列表项
+    4. notifyDataSetChanged: 通知适配器整个列表项数据发生了改变，刷新循环列表
+3. 使用SwipeRefreshLayout实现下拉刷新
+    1. 在build.gradle导入swipeRefreshLayout库
+    2. 使用setOnRefreshListener设置下拉监听者
+    3. 在onRefresh中监听下拉事件
+    4. 注意点：使用SwipeRefreshLayout时，直接节点只能有一个子视图，并且子视图必须允许滚动，支持的视图有：ScrollView，ListView， GridView， RecyclerView
+4. 使用第二代翻页视图ViewPager2，以及RecyclerView.Adapter适配器实现翻页功能
+    1. 在build.gradle中导入ViewPager2库
+    2. 在xml布局文件中编写ViewPager2
+    3. 注意：ViewPager2要求每页的宽高必须是match parent
+    4. 在activity中获取ViewPager2，并使用翻页适配器
+5. 第二代翻页视图ViewPager2相较于第一代翻页视图ViewPager的优点：
+    1. 支持水平和垂直方向翻页
+    2. 支持RecyclerView.Adapter适配器，并且支持动态更新
+    3. 支持翻页自定义动画
+6. 给ViewPager2添加标签布局
+    1. 使用FragmentStateAdapter适配器，此适配器继承于Recycler.Adapter适配器
+    2. 抛弃了PagerTabStrip从而使用标签布局TabLayout
+7. 配置安卓环境
+    1. 将Android Gradle Plugin Version 从3.4.1 改为 4.0.0
+    2. 将Gradle Version 从6.5改为6.8.3 目前已经可以运行
+    3.  com.beidou.plugins:BeidouPlugin:1.0.0 地址502无法下载，正在尝试使用新的地址
