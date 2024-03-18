@@ -41,3 +41,4 @@
     1. 将Android Gradle Plugin Version 从3.4.1 改为 4.0.0
     2. 将Gradle Version 从6.5改为6.8.3 目前已经可以运行
     3.  com.beidou.plugins:BeidouPlugin:1.0.0 地址502无法下载，正在尝试使用新的地址
+1
