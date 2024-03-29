@@ -1,64 +1,42 @@
-1. 解决BuildConfig.java文件无法自动生成
-    1. 在build.gradle中填写: buildFeatures    { dataBinding = true }
-    2. 在gradle.properties中增加：android.defaults.buildfeatures.buildconfig = true
-    3. 更改BuildConfig.java设置： 更改build.gradle中的defaultConfig
-    4. 最后运行项目则会生成BuildConfig.java文件
-2. 导出BeidouSDK.arr文件
-    1. 点击Android Studio 的Gradle
-    2. 点击BeidouSDK模块
-    3. 点击Tasks->build->assemble
-    4. 双击assemble
-    5. 拷贝出.aar文件，BeidouSDK->build->outputs->arr->BeidouSDK-release.aar
-    6. 修改名为BeidouSDK.aar
-3. 简单集成BeidouSDK.aar
-    1. 创建testbd项目
-    2. 将BeidouSDK.aar导入app模块下的libs文件夹下
-    3. 在build.gradle中的dependencied中添加：implementation fileTree(dir: 'libs', include: ['*.jar'])
-    4. 创建MyApplication.class继承自Application
-    5. 在AndroidManifest.xml文件中设置application的name为上一步创建的MyApplication
-    6. 在MyApplication的onCreate方法中初始化BeidouSDK
-    7. 运行则会输出埋点采集信息
-4. 遇到无法打印埋点信息的bug
-    1. BuildConfig中的DEBUG为false导致enableLog传入的值为false
-    2. 因为导入的BuildConfig的库地址不正确
-5. 安卓埋点源码的改动：
-    1. 去除com.beidou.plugins:BeidouPlugin:1.0.0，项目中没用到，且地址502
-    2. Android Gradle Plugin Version保持原有的3.4.1不变
-    3. Gradle Version保持原有的6.5不变
-    4. Gradle JDK: 改为version11.0.22
-6. 熟悉安卓埋点源码AbstractBeidouConfigOptions: 北斗配置的抽象类
-    1. 远程配置最小间隔24小时
-    2. 远程配置最大间隔48小时
-    3. 本地缓存上限默认32MB
-    4. 网络上传策略支持：3G, 4G, 5G, WIFI 
-    5. 默认开启多线程
-    6. 默认关闭加密
-7. 熟悉安卓埋点源码BeidouConfigOptions: 北斗配置项，继承自AbstractBeidouConfigOptions
-    1. 记录数据上报服务器地址
-    2. 记录远程配置请求地址
-    3. 记录数据上报地址，数据上报服务器地址一致
-    4. 设置 AutoTrackEvent 的类型，可通过 '|' 进行连接
-    5. 设置是否开启 AppCrash 采集，默认是关闭的
-    6. 设置两次数据发送的最小时间间隔，最小值 5 秒
-    7. 设置本地缓存日志的最大条目数最大50条
-    8. 设置本地缓存上限默认32MB，最小为16MB
-    9. 设置远程配置请求最小间隔时长，默认24小时，区间在(0, 7*24]
-    10. 设置远程配置请求最大间隔时长，默认48小时，区间在(0, 7*24]
-8. 熟悉安卓埋点源码BeidouAPI类中,initBeidouAPI方法初始化北斗SDK逻辑
-    1. 传入当前应用程序context
-    2. 记录配置项
-    3. 设置Debug模式为打开DEBUG模式，并将数据导入到BeidouAnalytics中
-    4. 定义HashMap类型，sInstanceMap，并使用同步锁，确保在同一时间只有一个线程可以进入这个同步代码块
-    5. 在同步代码块中从sInstanceMap中取出BeidouAPI对象
-    6. 如果没有BeidouAPI对象则创建该对象，并保存到sInstanceMap中
-9. BeidouAPI对象的初始化
-    1. 记录应用程序context
-    2. 设置debug模式
-    3. 获取当前应用包名context.getApplicationContext().getPackageName()
-    4. 创建ArrayList记录需要忽略自动埋点的Activities
-    5. 判断当前安卓版本大于4.0，则获取application上下文，注册Application.ActivityLifecycleCallbacks
-10. 学习Executors来创建单线程
-    1. 创建一个只有单个工作线程的 ExecutorService，该线程会按照顺序执行提交的任务 ：ExecutorService executor = Executors.newSingleThreadExecutor()
-    2. 提交任务给单线程：  executor.execute(new Runnable());
-    3. 关闭 ExecutorService: executor.shutdown();
+已完成的工作：
+	蚂蚁营业厅新增保单权益中心需求：给每个页面命名，提供spm_b_code
+
+熟悉安卓埋点代码：
+1. DbParams类: 数据库使用到的表名，数据库名称，版本号，表字段，数据库状态以及数据库操作
+2. PersistentName Interface：常量接口，用于从数据库取出数据所用的key常量，以及DbParams中的表名，名称，版本号等常量
+3. SharedPreferencesLoader类：创建Future<SharedPreferences>以及Executor单线程线程池，用于执行数据库的操作
+4. LoadSharedPreferences类： 创建SharedPreferencesLoader中的task，在call中取出数据持久化对象SharedPreferences
+5. PersistentLoader类：以PersistentName中的值为key，获取数据库中存储的数据，使用当前应用（Application）对象context进行初始化，保证此类在app生命周期时一直存在，使用SharedPreferencesLoader执行数据库操作
+6. TrackTaskManager类：追踪任务管理单例,使用阻塞队列：LinkedBlockingQueue<Runnable>
+    1. put(Runnable task)：将指定的任务放入队列中，如果队列已满则会阻塞等待直到有空间可用。
+    2. take()：从队列中移除并返回队头的任务，如果队列为空则会阻塞等待直到有任务可用。
+    3. poll()：从队列中移除并返回队头的任务，如果队列为空则立即返回 null。
+    4. isEmpty： 当前队列为空
+7. TrackTaskManagerThread类：继承自Runnable，用于对TrackTaskManager的操作
+    1. run()： 判断是否停止，如果未停止则执行TrackTaskManager中的take()。执行TrackTaskManager中的poll(),直到返回为null
+    2. stop()：停止，使用isStop记录
+    3. isStopped()： 获取当前停止状态
+8. BeidouActivityLifecycleCallbacks： 继承自Application.ActivityLifecycleCallbacks，全局监听应用程序中所有 Activity 的生命周期事件
+    1. onActivityCreated：  当一个新的 Activity 被创建时调用
+    2. onActivityStarted：当一个 Activity 变得可见但还无法与用户交互时调用
+    3. onActivityResumed： 当一个 Activity 变得可见并可以与用户交互时调用
+    4. onActivityPaused：当一个 Activity 失去焦点但仍然可见时调用
+    5. onActivityStopped： 当一个 Activity 不再可见时调用
+    6. onActivitySaveInstanceState： 在 Activity 即将被销毁前调用
+    7. onActivityDestroyed：当一个 Activity 被销毁时调用。
+9. BeidouUtils： 工具类
+    1. 常量信息
+    2. 将assets转为json
+    3. 获取运营商信息
+    4. 获取 Activity 的 title， 先获取Toolbar上的title，再获取activityTitle，都没有则从android:label属性中获取  
+    5. 根据 operator，获取本地化运营商信息
+    6. 合并json功能：合并去重属性，再返回json对象
+    7. 获取设备标识
+    8. 获取 ScreenUrl
+    9. 获取8位的UUID-(码)
+10. BeidouScreenOrientationDetector: 获取手机方向的类，通过监听手机4个角度实现
+    1. 小于45度，大于315度为0度，手机方向为portrait
+    2. 大于45度，小于135度为90度，手机方向为portrait
+    3. 大于135度，下雨225度为180度，手机方向为landscape
+    4. 大于225度，小于215度为 270度，手机方向为landscape
 
