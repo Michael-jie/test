@@ -1,42 +1,44 @@
-已完成的工作：
-	蚂蚁营业厅新增保单权益中心需求：给每个页面命名，提供spm_b_code
+1. 安卓打包生成APK文件
+    1. 选择Build -> Generate Signed Bundle / APK…，弹出生成安装包的对话框
+    2. 选择APK，弹出APK签名对话框，填写完签名，导出地址后点击next，弹出导出APK的打包对话框
+        1. 填写过密钥会自动填充
+        2. 没有填写过密钥点击create new…去创建
+    3. 选择release或者debug选项，点击Finish，等待生成APK文件
+    4. APK文件安装失败原因：
+        1. App只能升级不能降级，版本号小于已安装的版本号则会造成安装失败。
+        2. 新旧的签名不一致会造成安装失败
+        3. 安装类型不匹配则会安装失败【 比如之前安装的debug，现在安装release】
+2. 使用Android Studio自带的工具制作App所有尺寸图标
+    1. 右键模块 -> New -> Image Asset， 弹出选择新图片后的图标制作对话框
+    2. 在Path一栏中点击选择新图片，点击next，进入新图片生成图标预览页面
+    3. 点击Finish，则会生成对应尺寸图标
+3. 给APK瘦身
+    1. 去除冗余功能
+        1. Application节点中，将allowBackup属性设置为false： 该字段设置为true则表示允许用户备份APK安装包和应用程序，以便在刷机或者数据丢失后恢复应用，会造成用户隐私、账号密码、聊天记录泄露等风险
+        2. Application节点中，将supportsRtl属性设置为false：该字段设置为true，则表示支持从右向左书写的文字系统，常用的中文和英文都是从左往右的书写方式，几乎用不到此功能
+    2. 精简无用资源
+        1. 在build.gradle中，将buildTypes中的release的isMinifyEnabled设置为true：Android Studio打包APK时会压缩代码以及混淆代码
+        2. 在build.gradle中，在buildTypes中的release新增字段shrinkReasources设置为true：Android Studio打包SDK时会移除无用的资源文件
+    3. 压缩图片：保持有损压缩在60%的图片质量
+4. 实现：Debug模式下输出日志信息和Toast信息，Release模式下屏蔽日志信息和部分Toast信息
+    1. 生成BuildConfig文件 ```````````
+    2. 当打的APK包为Debug版本，那么BuildConfig中的DEBUG值为true，当打的包为Release版本那么BuildConfig中的DEBUG值为false
+    3. 自定义Log工具类,使用BuildConfig的DEBUG的值区分是否输出日志信息和Toast信息
+5. 对APK文件解包，主要用来解析res资源和AndroidManifest.xml
+    1. 进入https://apktool.org/docs/install/
+    2. 下载脚本，改名为apktool【注意不能有扩展名】
+    3. 下载最新版本的Apktool, 并将文件改名为apktool.jar
+    4. 将apktool和apktool.jar都移至/usr/local/bin文件夹中
+    5. 需要执行的命令行操作：
+        1. sudo chmod +x apktool
+        2. sudo chmod +x apktool.jar
+        3. sudo apktool
+    6. 对APK文件解包命令： apk d app-release.apk
+6. 新mac电脑配置环境
+    1. 下载Xcode 14.3.1
+    2. 下载Android Studio Giraffe
+    3. 遇到的问题：
+        1. AS编译报错 Cause: error=86, Bad CPU type in executable
+        2. 解决方案：升级rosetta库【sudo softwareupdate —install-rosetta】然后重新编译
 
-熟悉安卓埋点代码：
-1. DbParams类: 数据库使用到的表名，数据库名称，版本号，表字段，数据库状态以及数据库操作
-2. PersistentName Interface：常量接口，用于从数据库取出数据所用的key常量，以及DbParams中的表名，名称，版本号等常量
-3. SharedPreferencesLoader类：创建Future<SharedPreferences>以及Executor单线程线程池，用于执行数据库的操作
-4. LoadSharedPreferences类： 创建SharedPreferencesLoader中的task，在call中取出数据持久化对象SharedPreferences
-5. PersistentLoader类：以PersistentName中的值为key，获取数据库中存储的数据，使用当前应用（Application）对象context进行初始化，保证此类在app生命周期时一直存在，使用SharedPreferencesLoader执行数据库操作
-6. TrackTaskManager类：追踪任务管理单例,使用阻塞队列：LinkedBlockingQueue<Runnable>
-    1. put(Runnable task)：将指定的任务放入队列中，如果队列已满则会阻塞等待直到有空间可用。
-    2. take()：从队列中移除并返回队头的任务，如果队列为空则会阻塞等待直到有任务可用。
-    3. poll()：从队列中移除并返回队头的任务，如果队列为空则立即返回 null。
-    4. isEmpty： 当前队列为空
-7. TrackTaskManagerThread类：继承自Runnable，用于对TrackTaskManager的操作
-    1. run()： 判断是否停止，如果未停止则执行TrackTaskManager中的take()。执行TrackTaskManager中的poll(),直到返回为null
-    2. stop()：停止，使用isStop记录
-    3. isStopped()： 获取当前停止状态
-8. BeidouActivityLifecycleCallbacks： 继承自Application.ActivityLifecycleCallbacks，全局监听应用程序中所有 Activity 的生命周期事件
-    1. onActivityCreated：  当一个新的 Activity 被创建时调用
-    2. onActivityStarted：当一个 Activity 变得可见但还无法与用户交互时调用
-    3. onActivityResumed： 当一个 Activity 变得可见并可以与用户交互时调用
-    4. onActivityPaused：当一个 Activity 失去焦点但仍然可见时调用
-    5. onActivityStopped： 当一个 Activity 不再可见时调用
-    6. onActivitySaveInstanceState： 在 Activity 即将被销毁前调用
-    7. onActivityDestroyed：当一个 Activity 被销毁时调用。
-9. BeidouUtils： 工具类
-    1. 常量信息
-    2. 将assets转为json
-    3. 获取运营商信息
-    4. 获取 Activity 的 title， 先获取Toolbar上的title，再获取activityTitle，都没有则从android:label属性中获取  
-    5. 根据 operator，获取本地化运营商信息
-    6. 合并json功能：合并去重属性，再返回json对象
-    7. 获取设备标识
-    8. 获取 ScreenUrl
-    9. 获取8位的UUID-(码)
-10. BeidouScreenOrientationDetector: 获取手机方向的类，通过监听手机4个角度实现
-    1. 小于45度，大于315度为0度，手机方向为portrait
-    2. 大于45度，小于135度为90度，手机方向为portrait
-    3. 大于135度，下雨225度为180度，手机方向为landscape
-    4. 大于225度，小于215度为 270度，手机方向为landscape
 
